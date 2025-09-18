@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "open simulator ui",
+      "type": "shell",
+      "command": "open -a Simulator"
+    },
+    {
+      "label": "boot & wait simulator",
+      "type": "shell",
+      "command": "xcrun simctl boot \"iPhone 17\" || true && xcrun simctl bootstatus booted -b",
+      "dependsOn": "open simulator ui"
+    },
+    {
+      "label": "build app (sim)",
+      "type": "shell",
+      "command": "xcodebuild",
+      "args": [
+        "-scheme",
+        "tsuncap",
+        "-project",
+        "tsuncap/tsuncap.xcodeproj",
+        "-configuration",
+        "Debug",
+        "-destination",
+        "platform=iOS Simulator,name=iPhone 17",
+        "-derivedDataPath",
+        ".vscode_build"
+      ]
+    },
+    {
+      "label": "install app (sim)",
+      "type": "shell",
+      "command": "xcrun simctl install booted ${workspaceFolder}/.vscode_build/Build/Products/Debug-iphonesimulator/tsuncap.app",
+      "dependsOn": [
+        "boot & wait simulator",
+        "build app (sim)"
+      ]
+    },
+    {
+      "label": "launch app (sim)",
+      "type": "shell",
+      "command": "xcrun simctl launch booted nogtk.tsuncap",
+      "dependsOn": "install app (sim)",
+      "problemMatcher": []
+    }
+  ]
+}
