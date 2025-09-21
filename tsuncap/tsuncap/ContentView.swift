@@ -20,6 +20,12 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("セットアップ") {
+                    NavigationLink("iCloud フォルダアクセス検証") {
+                        FolderAccessHarnessView()
+                    }
+                }
+
                 Section("保存ファイル名の例") {
                     Text("\(metadata.isbn13)-\(generatedSlug).md")
                         .textSelection(.enabled)
