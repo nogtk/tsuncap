@@ -56,6 +56,27 @@ final class HTTPClientTests: XCTestCase {
         XCTAssertEqual(logger.successAttempts, [2])
     }
 
+    func testRetriesOnServerErrorAndSucceeds() async throws {
+        MockURLProtocol.enqueue(.success(data: Data("error".utf8), statusCode: 500))
+        MockURLProtocol.enqueue(.success(data: Data("ok".utf8), statusCode: 200))
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+
+        let client = URLSessionHTTPClient(
+            session: session,
+            configuration: HTTPClientConfiguration(defaultTimeout: 1, maxRetryCount: 1, retryDelay: { _ in 0 })
+        )
+
+        let request = HTTPRequest(url: URL(string: "https://example.com/500")!, timeout: 1)
+
+        let response = try await client.send(request)
+
+        XCTAssertEqual(String(data: response.data, encoding: .utf8), "ok")
+        XCTAssertEqual(MockURLProtocol.recordedRequests.count, 2)
+    }
+
     func testExhaustsRetriesAndThrowsTransportError() async {
         MockURLProtocol.enqueue(.failure(URLError(.timedOut)))
         MockURLProtocol.enqueue(.failure(URLError(.timedOut)))
@@ -82,6 +103,33 @@ final class HTTPClientTests: XCTestCase {
         }
 
         XCTAssertEqual(MockURLProtocol.recordedRequests.count, 3)
+    }
+
+    func testDoesNotRetryOnClientErrorStatus() async {
+        MockURLProtocol.enqueue(.success(data: Data("nope".utf8), statusCode: 404))
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+
+        let client = URLSessionHTTPClient(
+            session: session,
+            configuration: HTTPClientConfiguration(defaultTimeout: 1, maxRetryCount: 3, retryDelay: { _ in 0 })
+        )
+
+        let request = HTTPRequest(url: URL(string: "https://example.com/404")!, timeout: 1)
+
+        do {
+            _ = try await client.send(request)
+            XCTFail("Expected to throw")
+        } catch let HTTPClientError.unacceptableStatus(code, data) {
+            XCTAssertEqual(code, 404)
+            XCTAssertEqual(String(data: data, encoding: .utf8), "nope")
+        } catch {
+            XCTFail("Unexpected error: \(error)")
+        }
+
+        XCTAssertEqual(MockURLProtocol.recordedRequests.count, 1)
     }
 }
 
