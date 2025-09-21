@@ -1,16 +1,8 @@
-//
-//  tsuncapTests.swift
-//  tsuncapTests
-//
-//  Created by taka naoga on 2025/09/19.
-//
+import XCTest
+@testable import tsuncap
 
-import Testing
-
-struct tsuncapTests {
-
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+final class ContentViewTests: XCTestCase {
+    func testContentViewBuilds() {
+        _ = ContentView().body
     }
-
 }
