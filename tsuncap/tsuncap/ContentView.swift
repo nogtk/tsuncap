@@ -26,6 +26,12 @@ struct ContentView: View {
                     }
                 }
 
+                Section("ツール") {
+                    NavigationLink("ISBNスキャナ") {
+                        ScannerScreen()
+                    }
+                }
+
                 Section("保存ファイル名の例") {
                     Text("\(metadata.isbn13)-\(generatedSlug).md")
                         .textSelection(.enabled)
