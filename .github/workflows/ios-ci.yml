@@ -1,0 +1,41 @@
+name: iOS CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
+
+      - name: Resolve dependencies
+        run: xcodebuild -resolvePackageDependencies -project tsuncap/tsuncap.xcodeproj
+
+      - name: Run unit and UI tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project tsuncap/tsuncap.xcodeproj \
+            -scheme tsuncap \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -resultBundlePath TestResults.xcresult \
+            -derivedDataPath DerivedData
+
+      - name: Upload test results bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults
+          path: TestResults.xcresult

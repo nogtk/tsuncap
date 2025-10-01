@@ -20,6 +20,12 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("セットアップ") {
+                    NavigationLink("iCloud フォルダアクセス検証") {
+                        FolderAccessHarnessView()
+                    }
+                }
+
                 Section("ツール") {
                     NavigationLink("ISBNスキャナ") {
                         ScannerScreen()
